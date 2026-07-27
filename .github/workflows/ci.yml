@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Zero dependencies by design, so there is nothing to install and no
+      # supply-chain surface. If a package.json dependency ever appears, fail.
+      - name: Enforce zero runtime dependencies
+        run: |
+          deps=$(node -p "Object.keys(require('./package.json').dependencies||{}).length")
+          if [ "$deps" != "0" ]; then
+            echo "::error::This project must have zero runtime dependencies (found $deps)."
+            exit 1
+          fi
+
+      - name: Crypto tests
+        run: node test/crypto.test.mjs
+
+      - name: Sealed sender tests
+        run: node test/envelope.test.mjs
+
+      - name: Relay integration tests
+        run: node test/relay.test.mjs
+
+      - name: Syntax check every module
+        run: |
+          for f in client/crypto/*.js client/db/*.js client/net/*.js client/*.js server/*.mjs tools/*.mjs; do
+            node --check "$f"
+          done
+
+  verify-directory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # The directory is the root of all trust. A bad commit here — accidental or
+      # malicious — would let an attacker join the community. Verify every push.
+      - name: Verify signed member directory
+        run: |
+          if [ ! -f directory/members.sig ]; then
+            echo "No signature yet (bootstrap state) — skipping."
+            exit 0
+          fi
+          node tools/root-key.mjs verify
+
+      - name: Block accidental private key commits
+        run: |
+          if git ls-files | grep -Ei '(^|/)(root\.key|.*\.jks|.*\.keystore)$'; then
+            echo "::error::A private key is tracked in git. Rotate it immediately."
+            exit 1
+          fi

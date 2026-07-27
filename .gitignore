@@ -1,0 +1,25 @@
+# NEVER commit the community root private key. If it leaks, anyone can enrol
+# fake members and impersonate anybody in the community.
+*.key
+root.key
+.zenvx-root/
+
+# Android signing keystore. Losing it means no user can ever install an update
+# without uninstalling first (which destroys their local history).
+*.jks
+*.keystore
+key.properties
+
+node_modules/
+dist/
+build/
+*.apk
+*.aab
+*.log
+.DS_Store
+.env
+.env.*
+
+# Relay runtime state
+queue/
+*.jsonl

@@ -1,0 +1,9 @@
+{
+	"version": 1,
+	"serial": 0,
+	"updatedAt": "1970-01-01T00:00:00.000Z",
+	"note": "Placeholder. Run `npm run rootkey init` then `npm run rootkey enroll <request.json>` to generate a real signed directory. Every member entry must carry a rootSig or clients will reject it.",
+	"ice": [{ "urls": "stun:stun.l.google.com:19302" }],
+	"members": [],
+	"revoked": []
+}
