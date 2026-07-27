@@ -1,0 +1,20 @@
+{
+  "name": "zenvx-chat",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "E2EE messenger for a closed community. Server is a phone book; your device is the database.",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "test": "node test/crypto.test.mjs && node test/envelope.test.mjs && node test/relay.test.mjs",
+    "test:crypto": "node test/crypto.test.mjs",
+    "test:envelope": "node test/envelope.test.mjs",
+    "test:relay": "node test/relay.test.mjs",
+    "relay": "node server/relay.mjs",
+    "rootkey": "node tools/root-key.mjs"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=20"
+  }
+}
