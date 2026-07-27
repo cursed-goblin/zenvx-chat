@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, viewport-fit=cover"
+		/>
+		<meta name="theme-color" content="#0b0f14" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<title>ZenvX Chat</title>
+		<link rel="manifest" href="./manifest.json" />
+		<style>
+			:root {
+				--bg: #0b0f14;
+				--panel: #131a22;
+				--panel2: #1a232e;
+				--line: #243040;
+				--text: #e6edf3;
+				--dim: #8b9aad;
+				--me: #1f6f4a;
+				--them: #202b38;
+				--accent: #3ddc97;
+				--warn: #ffb454;
+				--bad: #ff6b6b;
+			}
+			* {
+				box-sizing: border-box;
+				-webkit-tap-highlight-color: transparent;
+			}
+			html,
+			body {
+				height: 100%;
+				margin: 0;
+			}
+			body {
+				background: var(--bg);
+				color: var(--text);
+				font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+			}
+			button {
+				font: inherit;
+				color: inherit;
+				cursor: pointer;
+				border: 0;
+				background: none;
+			}
+			input,
+			textarea {
+				font: inherit;
+				color: inherit;
+			}
+			.btn {
+				background: var(--accent);
+				color: #06231a;
+				font-weight: 650;
+				padding: 11px 16px;
+				border-radius: 10px;
+			}
+			.btn.ghost {
+				background: var(--panel2);
+				color: var(--text);
+				border: 1px solid var(--line);
+			}
+			.btn:disabled {
+				opacity: 0.5;
+				cursor: default;
+			}
+			.field {
+				width: 100%;
+				background: var(--bg);
+				border: 1px solid var(--line);
+				border-radius: 10px;
+				padding: 11px 12px;
+			}
+			.mono {
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+
+			/* ---------- screens ---------- */
+			.screen {
+				display: none;
+				flex: 1;
+				min-height: 0;
+				flex-direction: column;
+			}
+			.screen.on {
+				display: flex;
+			}
+			.pad {
+				padding: 24px 20px;
+				max-width: 520px;
+				width: 100%;
+				margin: 0 auto;
+				overflow-y: auto;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+			}
+			.sub {
+				color: var(--dim);
+				font-size: 13px;
+				margin-bottom: 20px;
+			}
+			label {
+				display: block;
+				font-size: 12px;
+				color: var(--dim);
+				margin: 14px 0 6px;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
+			.note {
+				background: var(--panel);
+				border: 1px solid var(--line);
+				border-left: 3px solid var(--warn);
+				border-radius: 8px;
+				padding: 11px 13px;
+				font-size: 13px;
+				color: var(--dim);
+				margin: 16px 0;
+			}
+			.note b {
+				color: var(--text);
+			}
+
+			/* ---------- chat ---------- */
+			header {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 12px 14px;
+				background: var(--panel);
+				border-bottom: 1px solid var(--line);
+				padding-top: max(12px, env(safe-area-inset-top));
+			}
+			header .who {
+				flex: 1;
+				min-width: 0;
+			}
+			header .name {
+				font-weight: 620;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			header .state {
+				font-size: 11.5px;
+				color: var(--dim);
+			}
+			.dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: var(--dim);
+				display: inline-block;
+				margin-right: 5px;
+			}
+			.dot.p2p {
+				background: var(--accent);
+			}
+			.dot.relay {
+				background: var(--warn);
+			}
+			.dot.off {
+				background: var(--bad);
+			}
+
+			.list {
+				flex: 1;
+				overflow-y: auto;
+				-webkit-overflow-scrolling: touch;
+			}
+			.row {
+				display: flex;
+				gap: 12px;
+				padding: 13px 15px;
+				border-bottom: 1px solid var(--line);
+				align-items: center;
+			}
+			.row:active {
+				background: var(--panel2);
+			}
+			.av {
+				width: 42px;
+				height: 42px;
+				border-radius: 50%;
+				background: var(--panel2);
+				display: grid;
+				place-items: center;
+				font-weight: 650;
+				flex: 0 0 auto;
+				color: var(--accent);
+			}
+			.row .meta {
+				flex: 1;
+				min-width: 0;
+			}
+			.row .last {
+				color: var(--dim);
+				font-size: 13px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.row .when {
+				color: var(--dim);
+				font-size: 11px;
+			}
+
+			#msgs {
+				flex: 1;
+				overflow-y: auto;
+				padding: 14px 12px;
+				display: flex;
+				flex-direction: column;
+				gap: 7px;
+			}
+			.bub {
+				max-width: 78%;
+				padding: 8px 11px;
+				border-radius: 13px;
+				white-space: pre-wrap;
+				word-wrap: break-word;
+				background: var(--them);
+				align-self: flex-start;
+				border-bottom-left-radius: 4px;
+			}
+			.bub.me {
+				background: var(--me);
+				align-self: flex-end;
+				border-bottom-left-radius: 13px;
+				border-bottom-right-radius: 4px;
+			}
+			.bub .t {
+				font-size: 10.5px;
+				color: rgba(230, 237, 243, 0.55);
+				text-align: right;
+				margin-top: 3px;
+			}
+			.composer {
+				display: flex;
+				gap: 8px;
+				padding: 10px;
+				background: var(--panel);
+				border-top: 1px solid var(--line);
+				padding-bottom: max(10px, env(safe-area-inset-bottom));
+			}
+			.composer textarea {
+				flex: 1;
+				resize: none;
+				max-height: 120px;
+				background: var(--bg);
+				border: 1px solid var(--line);
+				border-radius: 20px;
+				padding: 10px 14px;
+			}
+			.send {
+				width: 42px;
+				height: 42px;
+				border-radius: 50%;
+				background: var(--accent);
+				color: #06231a;
+				font-size: 19px;
+				flex: 0 0 auto;
+			}
+			.sn {
+				font-family: ui-monospace, Menlo, monospace;
+				font-size: 13px;
+				letter-spacing: 0.08em;
+				background: var(--bg);
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				padding: 12px;
+				line-height: 1.9;
+				word-spacing: 6px;
+			}
+			.toast {
+				position: fixed;
+				left: 50%;
+				transform: translateX(-50%);
+				bottom: 78px;
+				background: #000c;
+				border: 1px solid var(--line);
+				padding: 9px 15px;
+				border-radius: 20px;
+				font-size: 13px;
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.2s;
+				z-index: 50;
+			}
+			.toast.on {
+				opacity: 1;
+			}
+			.empty {
+				padding: 40px 24px;
+				text-align: center;
+				color: var(--dim);
+				font-size: 13.5px;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- 1. unlock / first run -->
+		<section id="s-lock" class="screen on">
+			<div class="pad">
+				<h1>ZenvX Chat</h1>
+				<div class="sub" id="lock-sub">Unlock your local message store.</div>
+				<label for="pass">Passphrase</label>
+				<input
+					id="pass"
+					class="field"
+					type="password"
+					autocomplete="current-password"
+				/>
+				<div id="pass2wrap" style="display: none">
+					<label for="pass2">Confirm passphrase</label>
+					<input id="pass2" class="field" type="password" />
+				</div>
+				<div class="note" id="lock-note" style="display: none">
+					<b>There is no password reset.</b> Your messages are encrypted with this
+					passphrase on this device. Nobody &mdash; including whoever runs the relay
+					&mdash; can recover it. Write it down somewhere physical.
+				</div>
+				<div style="margin-top: 18px; display: flex; gap: 8px">
+					<button class="btn" id="unlock">Unlock</button>
+					<button class="btn ghost" id="restore">Restore backup</button>
+				</div>
+				<div id="lock-err" style="color: var(--bad); font-size: 13px; margin-top: 12px"></div>
+			</div>
+		</section>
+
+		<!-- 2. enrolment (no identity yet) -->
+		<section id="s-enroll" class="screen">
+			<div class="pad">
+				<h1>Join the community</h1>
+				<div class="sub">
+					Membership is closed. Send this request to whoever holds the community
+					root key; once they add you, your handle works everywhere.
+				</div>
+				<label for="handle">Handle (a-z, 0-9, dot, dash, underscore)</label>
+				<input id="handle" class="field mono" placeholder="zenvx" />
+				<label for="dname">Display name</label>
+				<input id="dname" class="field" placeholder="ZenvX" />
+				<div style="margin-top: 18px">
+					<button class="btn" id="mkid">Generate identity</button>
+				</div>
+				<div id="reqwrap" style="display: none">
+					<label>Enrolment request &mdash; send this to the key holder</label>
+					<textarea id="req" class="field mono" rows="7" readonly style="font-size: 11px"></textarea>
+					<div style="margin-top: 10px; display: flex; gap: 8px">
+						<button class="btn ghost" id="copyreq">Copy</button>
+						<button class="btn" id="gotdir">I'm enrolled &mdash; continue</button>
+					</div>
+					<div class="note">
+						This contains only public keys. Your private keys never leave this
+						device.
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- 3. conversation list -->
+		<section id="s-list" class="screen">
+			<header>
+				<div class="who">
+					<div class="name">ZenvX Chat</div>
+					<div class="state"><span class="dot" id="netdot"></span><span id="netstate">connecting...</span></div>
+				</div>
+				<button class="btn ghost" id="newchat" style="padding: 8px 12px">New</button>
+				<button class="btn ghost" id="settings" style="padding: 8px 12px">&#9881;</button>
+			</header>
+			<div class="list" id="convs"></div>
+		</section>
+
+		<!-- 4. chat -->
+		<section id="s-chat" class="screen">
+			<header>
+				<button id="back" style="font-size: 22px; padding: 0 4px">&lsaquo;</button>
+				<div class="who">
+					<div class="name" id="peername"></div>
+					<div class="state"><span class="dot" id="peerdot"></span><span id="peerstate"></span></div>
+				</div>
+				<button class="btn ghost" id="verify" style="padding: 8px 12px">Verify</button>
+			</header>
+			<div id="msgs"></div>
+			<div class="composer">
+				<textarea id="input" rows="1" placeholder="Message"></textarea>
+				<button class="send" id="go">&uarr;</button>
+			</div>
+		</section>
+
+		<!-- 5. settings -->
+		<section id="s-set" class="screen">
+			<header>
+				<button id="back2" style="font-size: 22px; padding: 0 4px">&lsaquo;</button>
+				<div class="who"><div class="name">Settings</div></div>
+			</header>
+			<div class="pad">
+				<label>Your handle</label>
+				<div class="mono" id="myhandle"></div>
+				<label>Your safety number fingerprint</label>
+				<div class="sn" id="myfp"></div>
+				<label>Storage</label>
+				<div class="sub" id="storage">-</div>
+				<label>Backup</label>
+				<div class="sub">
+					The only way to recover history if you lose this device. The file is
+					encrypted &mdash; store it anywhere.
+				</div>
+				<div style="display: flex; gap: 8px; flex-wrap: wrap">
+					<button class="btn" id="backup">Export backup</button>
+					<button class="btn ghost" id="lock">Lock app</button>
+				</div>
+				<label>Relay</label>
+				<input id="relay" class="field mono" />
+				<div style="margin-top: 10px">
+					<button class="btn ghost" id="saverelay">Save &amp; reconnect</button>
+				</div>
+				<div class="note">
+					The relay only forwards sealed envelopes and helps devices find each
+					other. It cannot read messages and never stores them after delivery.
+				</div>
+				<label>Version</label>
+				<div class="sub mono" id="ver">-</div>
+			</div>
+		</section>
+
+		<div class="toast" id="toast"></div>
+		<script type="module" src="./app.js"></script>
+	</body>
+</html>
